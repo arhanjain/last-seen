@@ -1,65 +1,44 @@
-from pypresence import Presence
-from googleapiclient.discovery import build
-from httplib2 import Http
+import json
+from pathlib import Path
 import time
+import logging
+import atexit
+import signal
 
-import os.path
+from functools import partial
+from google_photos_client import GooglePhotosClient
+from image_hosting import Imgur
+from rpc import RPC
+from pypresence import Presence
 
-from google.auth.transport.requests import Request
-from google.oauth2.credentials import Credentials
-from google_auth_oauthlib.flow import InstalledAppFlow
-from googleapiclient.discovery import build
-from googleapiclient.errors import HttpError
-
-# If modifying these scopes, delete the file token.json.
-SCOPES = ['https://www.googleapis.com/auth/photoslibrary.readonly']
-
+def cleanup(imgur_client: Imgur, rpc: RPC, *args):
+    print("Cleaning up leftovers...")
+    imgur_client.delete_image()
+    rpc.shutdown()
+    exit(0)
 
 def main():
-    """Shows basic usage of the People API.
-    Prints the name of the first 10 connections.
-    """
-    creds = None
-    # The file token.json stores the user's access and refresh tokens, and is
-    # created automatically when the authorization flow completes for the first
-    # time.
-    if os.path.exists('token.json'):
-        creds = Credentials.from_authorized_user_file('token.json', SCOPES)
-    # If there are no (valid) credentials available, let the user log in.
-    if not creds or not creds.valid:
-        if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
-        else:
-            flow = InstalledAppFlow.from_client_secrets_file(
-                'credentials.json', SCOPES)
-            creds = flow.run_local_server(port=0)
-        # Save the credentials for the next run
-        with open('token.json', 'w') as token:
-            token.write(creds.to_json())
+    # Initialize clients
+    photos_client = GooglePhotosClient()
+    imgur = Imgur()
+    rpc = RPC()
 
-    try:
-        service = build('photoslibrary', 'v1', credentials=creds, static_discovery=False)
+    # Exit handlers
+    #atexit.register(cleanup, imgur, rpc)
+    signal.signal(signal.SIGINT, partial(cleanup, imgur, rpc))
+    signal.signal(signal.SIGTERM, partial(cleanup, imgur, rpc))
+ 
+    img = photos_client.get_latest_image_url()
+    img_hosted = imgur.upload_image(img)
 
-        result = service.mediaItems().list().execute()
-        print(result.get)
+    rpc.connect()
+    rpc.update(state="in Nitin's pants", large_image=img_hosted)
 
-    except HttpError as err:
-        print(err)
+    while True:
+        time.sleep(5)
 
 
 if __name__ == '__main__':
     main()
-    exit()
 
-#service = build('photoslibrary', 'v1', http=creds.authorize(Http()))
-
-client_id = open("./secret.lock", "r").read()
-RPC = Presence(client_id)
-
-RPC.connect()
-
-RPC.update(state="hello, how are you. my name is nitin. i am under the water pls help me", large_image="https://bit.ly/3wyTir3")
-
-while True:
-    time.sleep(5)
 

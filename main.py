@@ -14,25 +14,35 @@ def cleanup(imgur_client: ImgurClient, rpc: RichPresenceClient, *args):
 def main():
     # Initialize clients
     photos_client = GooglePhotosClient()
-    imgur = ImgurClient()
-    rpc = RichPresenceClient()
+    imgur_client = ImgurClient()
+    rpc_client = RichPresenceClient()
     azure_cv_client = AzureCVClient()
 
     # Exit handlers
     #atexit.register(cleanup, imgur, rpc)
-    signal.signal(signal.SIGINT, partial(cleanup, imgur, rpc))
-    signal.signal(signal.SIGTERM, partial(cleanup, imgur, rpc))
+    signal.signal(signal.SIGINT, partial(cleanup, imgur_client, rpc_client))
+    signal.signal(signal.SIGTERM, partial(cleanup, imgur_client, rpc_client))
  
-    img_url = photos_client.get_latest_image_url()
-    img_hosted_url = imgur.upload_image(img_url)
+    rpc_client.connect()
 
-    caption = azure_cv_client.get_best_caption(img_url=img_url)
-
-    rpc.connect()
-    rpc.update(state=caption, large_image=img_hosted_url)
+    current_image_url = None
 
     while True:
-        time.sleep(5)
+        # Get latest image
+        img_url = photos_client.get_latest_image_url()
+
+        if img_url != current_image_url:  # Only host image and generate captions if new image found
+            img_hosted_url = imgur_client.upload_image(img_url)
+
+            # Generate image caption
+            caption = azure_cv_client.get_best_caption(img_url=img_url)
+
+            # Update Discord Rich Presence
+            rpc_client.update(state=caption, large_image=img_hosted_url)
+            current_image_url = img_url
+
+        # Run every 5 minutes
+        time.sleep(300)
 
 
 if __name__ == '__main__':

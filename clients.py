@@ -4,6 +4,7 @@ import json
 from pypresence import Presence
 from pathlib import Path
 from googleapiclient.errors import HttpError
+from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
@@ -24,6 +25,8 @@ class GooglePhotosClient:
         if token_file.exists():  # If auth token already exists
             # Load existing auth token
             self.creds = Credentials.from_authorized_user_file(token_file)
+            if not self.creds.valid:
+                self.creds.refresh(Request())
 
         if not self.creds or not self.creds.valid:  # If auth token is missing or invalid, reauthorize
             credentials_file = Path(__file__).parent/"creds"/"google_credentials.json"

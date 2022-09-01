@@ -122,8 +122,18 @@ class RichPresenceClient():
     def connect(self):
         self.client.connect()
 
-    def update(self, state, large_image):
-        self.client.update(state=state, large_image=large_image, buttons=[{"label": "Find Single Nitins in your Area", "url": "https://github.com/arhanjain/last-seen"}])
+    def update(self, caption, large_image, end):
+        # TODO: variable parameters
+        self.client.update(
+            large_image=large_image,
+            small_image="https://media.giphy.com/media/s1hTGlErQZMQOfttE6/giphy.gif",
+            details=caption,
+            end=end,
+            buttons=[
+                {"label": "Source Code", "url": "https://github.com/arhanjain/last-seen"},
+            ],
+
+        )
 
     def shutdown(self):
         self.client.close()

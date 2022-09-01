@@ -26,20 +26,27 @@ def main():
     rpc_client.connect()
 
     current_image_url = None
+    current_image_hosted_url = None
+    caption = None
 
     while True:
         # Get latest image
         img_url = photos_client.get_latest_image_url()
 
         if img_url != current_image_url:  # Only host image and generate captions if new image found
-            img_hosted_url = imgur_client.upload_image(img_url)
+            current_image_hosted_url = imgur_client.upload_image(img_url)
 
             # Generate image caption
             caption = azure_cv_client.get_best_caption(img_url=img_url)
 
-            # Update Discord Rich Presence
-            rpc_client.update(state=caption, large_image=img_hosted_url)
+            # Set new image to current image being used
             current_image_url = img_url
+
+        # Get current epoch
+        epoch = int(time.time())
+
+        # Update Discord Rich Presence
+        rpc_client.update(caption=caption, large_image=current_image_hosted_url, end=(epoch + 5*60))
 
         # Run every 5 minutes
         time.sleep(300)

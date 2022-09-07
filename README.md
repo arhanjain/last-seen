@@ -11,14 +11,20 @@ A Discord Rich Presence client that uses AI to show off the latest from your cam
 
 ## Installation
 
-Install all the configurations and tools with the setup script.
+Clone this repository in a directory of your choice with the following command.
 
-```bash
-./setup.sh
+``` 
+git clone https://github.com/arhanjain/last-seen.git 
 ```
-No setup further setup is needed. This script will take care of checking and installing everything that's required.
+or if using SSH,
+``` 
+git clone git@github.com:arhanjain/last-seen.git 
+```
 
-*Note: The installation script has only been tested for **Ubuntu** environments.*
+Head to the [Google Cloud page](https://console.cloud.google.com/projectcreate) and create a new project called "Last-Seen" (technically you can name it anything, but just to stay organized).
+
+#### Installation Instructions in Progress
+
 ## Authors
 
 - [@arhanjain](https://www.github.com/arhanjain)
